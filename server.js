@@ -23,12 +23,18 @@ app.get('/', (req, res) => {
 });
 
 // Database Connection
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('🍃 MongoDB Connected Successfully'))
-    .catch(err => {
-        console.error('❌ MongoDB Connection Error:', err);
-        process.exit(1); // Exit if DB connection fails in production
-    });
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGO_URI, {
+            serverSelectionTimeoutMS: 5000 // 5 seconds timeout
+        });
+        console.log('🍃 MongoDB Connected Successfully');
+    } catch (err) {
+        console.error('❌ MongoDB Connection Error:', err.message);
+    }
+};
+
+connectDB();
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
