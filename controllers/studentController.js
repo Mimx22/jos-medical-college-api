@@ -55,6 +55,10 @@ const loginStudent = async (req, res) => {
     const { email, studentId, password } = req.body;
     const identifier = email || studentId;
 
+    if (!identifier || !password) {
+        return res.status(400).json({ message: 'Please provide both an identifier and a password' });
+    }
+
     try {
         // Find by Email OR Student ID
         const student = await Student.findOne({
