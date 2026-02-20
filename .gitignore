@@ -1,0 +1,13 @@
+node_modules
+.env
+.vscode
+*.log
+uploads/
+package-lock.json
+josproject-backend.code-workspace
+thunder-client-*.json
+debug_db.js
+seedAdmin.js
+testAdminApi.js
+testEmail.js
+testUpload.js
