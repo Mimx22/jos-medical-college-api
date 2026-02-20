@@ -13,10 +13,13 @@ const generateToken = (id) => {
 // @route   POST /api/staff/login
 // @access  Public
 const loginStaff = async (req, res) => {
-    const { email, password } = req.body;
+    const { email, staffId, password } = req.body;
+    const identifier = email || staffId;
 
     try {
-        const staff = await Staff.findOne({ email });
+        const staff = await Staff.findOne({
+            $or: [{ email: identifier }, { staffId: identifier }]
+        });
 
         if (staff && (await bcrypt.compare(password, staff.password))) {
             res.json({

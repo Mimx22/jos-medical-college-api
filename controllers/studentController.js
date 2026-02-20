@@ -52,12 +52,13 @@ const registerStudent = async (req, res) => {
 // @route   POST /api/students/login
 // @access  Public
 const loginStudent = async (req, res) => {
-    const { email, password } = req.body; // email can be studentId too
+    const { email, studentId, password } = req.body;
+    const identifier = email || studentId;
 
     try {
         // Find by Email OR Student ID
         const student = await Student.findOne({
-            $or: [{ email: email }, { studentId: email }]
+            $or: [{ email: identifier }, { studentId: identifier }]
         });
 
         if (student && (await bcrypt.compare(password, student.password))) {

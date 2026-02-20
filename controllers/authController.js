@@ -13,13 +13,18 @@ const generateToken = (id) => {
 // @route   POST /api/auth/login
 // @access  Public
 const loginUser = async (req, res) => {
-    const { email, password } = req.body;
+    const { email, studentId, password } = req.body;
+    const identifier = email || studentId;
 
-    let user = await Student.findOne({ email });
+    let user = await Student.findOne({
+        $or: [{ email: identifier }, { studentId: identifier }]
+    });
     let role = 'student';
 
     if (!user) {
-        user = await Staff.findOne({ email });
+        user = await Staff.findOne({
+            $or: [{ email: identifier }, { staffId: identifier }]
+        });
         role = 'staff';
     }
 
