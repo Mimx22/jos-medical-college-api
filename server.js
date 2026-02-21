@@ -25,13 +25,13 @@ const allowedOrigins = [
 
 app.use(cors({
     origin: function (origin, callback) {
-        // allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-            return callback(new Error(msg), false);
+        // Allow requests with no origin (like mobile apps/Postman) or allowed domains
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.warn(`[CORS Blocked] Origin: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
         }
-        return callback(null, true);
     },
     credentials: true
 }));
@@ -46,7 +46,7 @@ app.use('/api/admin', require('./routes/adminRoutes'));
 
 // Root path for health check
 app.get('/', (req, res) => {
-    res.json({ message: 'JMC API is live and healthy' });
+    res.status(200).send('JMC API is live and healthy');
 });
 
 // Database Connection

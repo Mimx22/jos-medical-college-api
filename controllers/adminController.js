@@ -47,7 +47,7 @@ const updateApplicationStatus = async (req, res) => {
                         <li><strong>Student ID:</strong> ${student.studentId}</li>
                         <li><strong>Temporary Password:</strong> ${tempPassword}</li>
                     </ul>
-                    <p>Please login at the <a href="https://medicalcareer.netlify.app/student-login.html">Student Portal</a> and change your password immediately.</p>
+                    <p>Please login at the <a href="${process.env.FRONTEND_URL || 'https://medicalcareer.netlify.app'}/student-login.html">Student Portal</a> and change your password immediately.</p>
                 `;
 
                 try {
