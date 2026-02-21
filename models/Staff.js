@@ -32,7 +32,9 @@ const staffSchema = new mongoose.Schema({
     role: {
         type: String,
         default: 'staff'
-    }
+    },
+    resetPasswordToken: String,
+    resetPasswordExpire: Date
 });
 
 module.exports = mongoose.model('Staff', staffSchema);

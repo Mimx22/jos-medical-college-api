@@ -38,7 +38,9 @@ const studentSchema = new mongoose.Schema({
     dateApplied: {
         type: Date,
         default: Date.now
-    }
+    },
+    resetPasswordToken: String,
+    resetPasswordExpire: Date
 });
 
 module.exports = mongoose.model('Student', studentSchema);
