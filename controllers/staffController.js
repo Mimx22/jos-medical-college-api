@@ -3,7 +3,7 @@ const Course = require('../models/Course');
 const Result = require('../models/Result');
 const Student = require('../models/Student');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+// const bcrypt = require('bcryptjs'); // Removed for plain-text
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -25,10 +25,8 @@ const loginStaff = async (req, res) => {
             $or: [{ email: identifier }, { staffId: identifier }]
         });
 
-        // Secure bcrypt check
-        const isMatch = (staff && staff.password && typeof password === 'string' && typeof staff.password === 'string')
-            ? await bcrypt.compare(password, staff.password)
-            : false;
+        // Check password directly (Plain text)
+        const isMatch = (staff && staff.password && password === staff.password);
 
         if (staff && isMatch) {
             res.json({

@@ -2,7 +2,7 @@ const Student = require('../models/Student');
 const Result = require('../models/Result');
 const Course = require('../models/Course');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+// const bcrypt = require('bcryptjs'); // Removed for plain-text
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -31,13 +31,12 @@ const registerStudent = async (req, res) => {
         const userExists = await Student.findOne({ email });
         if (userExists) return res.status(400).json({ message: 'User already exists' });
 
-        if (!password || typeof password !== 'string') {
-            console.error('Registration failed: Password is missing or invalid');
+        if (!password) {
+            console.error('Registration failed: Password is missing');
             return res.status(400).json({ message: 'Password is required' });
         }
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        const hashedPassword = password; // Using plain text
 
         const documents = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
 
@@ -84,10 +83,8 @@ const loginStudent = async (req, res) => {
 
         console.log(`--- Student Login Attempt: ${identifier} ---`);
 
-        // Secure bcrypt check
-        const isMatch = (student && student.password && typeof password === 'string' && typeof student.password === 'string')
-            ? await bcrypt.compare(password, student.password)
-            : false;
+        // Check password directly (Plain text)
+        const isMatch = (student && student.password && password === student.password);
 
         if (student && isMatch) {
             res.json({

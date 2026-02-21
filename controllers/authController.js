@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+// const bcrypt = require('bcryptjs'); // Removed for plain-text
 const Student = require('../models/Student');
 const Staff = require('../models/Staff');
 
@@ -45,10 +45,8 @@ const loginUser = async (req, res) => {
         });
     }
 
-    // Secure bcrypt check
-    const isMatch = (user && user.password && typeof password === 'string' && typeof user.password === 'string')
-        ? await bcrypt.compare(password, user.password)
-        : false;
+    // Secure check removed, using plain-text as requested
+    const isMatch = (user && user.password && password === user.password);
 
     if (user && isMatch) {
         res.json({
@@ -98,21 +96,16 @@ const registerStudent = async (req, res) => {
         return res.status(400).json({ message: 'User already exists' });
     }
 
-    if (!password || typeof password !== 'string') {
-        console.error('Registration Error: Password missing or invalid');
-        return res.status(400).json({ message: 'Password is required and must be a string' });
+    if (!password) {
+        return res.status(400).json({ message: 'Password is required' });
     }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
 
     const student = await Student.create({
         fullName,
         email,
         phone,
         program,
-        password: hashedPassword,
+        password: password, // Stored as plain text as requested
         admissionStatus: 'Pending'
     });
 

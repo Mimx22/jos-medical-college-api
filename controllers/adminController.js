@@ -1,5 +1,5 @@
 const Student = require('../models/Student');
-const bcrypt = require('bcryptjs');
+// const bcrypt = require('bcryptjs'); // Removed for plain-text
 const sendEmail = require('../utils/sendEmail');
 
 // @desc    Get all applications
@@ -35,8 +35,7 @@ const updateApplicationStatus = async (req, res) => {
 
                 // Generate 5-digit temporary password
                 const tempPassword = Math.floor(10000 + Math.random() * 90000).toString();
-                const salt = await bcrypt.genSalt(10);
-                student.password = await bcrypt.hash(tempPassword, salt);
+                student.password = tempPassword; // Plain text
 
                 // Send Email
                 const message = `
