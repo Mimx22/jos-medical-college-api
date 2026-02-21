@@ -12,17 +12,25 @@ const generateToken = (id) => {
 // @route   POST /api/students/register
 // @access  Public
 const registerStudent = async (req, res) => {
-    const { fullName, email, phone, program, password } = req.body;
+    // Log for debugging (especially helpful on Render logs)
+    console.log('--- Registration Attempt ---');
+    console.log('Body:', req.body);
+    console.log('Files:', req.files ? req.files.length : 0);
+
+    const { fullName, email, phone, program } = req.body;
+
+    // Ensure password is not undefined (from FormData or otherwise)
+    // Default to 'password123' if not provided by frontend
+    const password = req.body.password || 'password123';
 
     try {
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
         const userExists = await Student.findOne({ email });
         if (userExists) return res.status(400).json({ message: 'User already exists' });
 
-        // Hash password (if not just using simple logic for now, but best correct)
-        // const salt = await bcrypt.genSalt(10);
-        // const hashedPassword = await bcrypt.hash(password, salt);
-        // For now, storing plain text as per "mock" transition ease, OR hashed. 
-        // Let's do hashed for security best practice.
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -47,7 +55,8 @@ const registerStudent = async (req, res) => {
             });
         }
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Registration Error:', error);
+        res.status(500).json({ message: error.message || 'Server error during registration' });
     }
 };
 
