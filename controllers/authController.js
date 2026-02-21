@@ -20,6 +20,8 @@ const loginUser = async (req, res) => {
         return res.status(400).json({ message: 'Please provide both an identifier and a password' });
     }
 
+    console.log(`--- Login Attempt for: ${identifier} ---`);
+
     let user = await Student.findOne({
         $or: [{ email: identifier }, { studentId: identifier }]
     });
@@ -43,7 +45,12 @@ const loginUser = async (req, res) => {
         });
     }
 
-    if (user && (await bcrypt.compare(password, user.password))) {
+    // Secure bcrypt check
+    const isMatch = (user && user.password && typeof password === 'string' && typeof user.password === 'string')
+        ? await bcrypt.compare(password, user.password)
+        : false;
+
+    if (user && isMatch) {
         res.json({
             _id: user._id,
             fullName: user.fullName,
@@ -89,6 +96,11 @@ const registerStudent = async (req, res) => {
 
     if (userExists) {
         return res.status(400).json({ message: 'User already exists' });
+    }
+
+    if (!password || typeof password !== 'string') {
+        console.error('Registration Error: Password missing or invalid');
+        return res.status(400).json({ message: 'Password is required and must be a string' });
     }
 
     // Hash password

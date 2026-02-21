@@ -25,7 +25,12 @@ const loginStaff = async (req, res) => {
             $or: [{ email: identifier }, { staffId: identifier }]
         });
 
-        if (staff && (await bcrypt.compare(password, staff.password))) {
+        // Secure bcrypt check
+        const isMatch = (staff && staff.password && typeof password === 'string' && typeof staff.password === 'string')
+            ? await bcrypt.compare(password, staff.password)
+            : false;
+
+        if (staff && isMatch) {
             res.json({
                 _id: staff._id,
                 fullName: staff.fullName,

@@ -31,10 +31,13 @@ const registerStudent = async (req, res) => {
         const userExists = await Student.findOne({ email });
         if (userExists) return res.status(400).json({ message: 'User already exists' });
 
-        // TEMPORARY: Remove hashing to troubleshoot "illegal argument" error
-        // const salt = await bcrypt.genSalt(10);
-        // const hashedPassword = await bcrypt.hash(password, salt);
-        const hashedPassword = password;
+        if (!password || typeof password !== 'string') {
+            console.error('Registration failed: Password is missing or invalid');
+            return res.status(400).json({ message: 'Password is required' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
         const documents = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
 
@@ -79,7 +82,14 @@ const loginStudent = async (req, res) => {
             $or: [{ email: identifier }, { studentId: identifier }]
         });
 
-        if (student && (await bcrypt.compare(password, student.password))) {
+        console.log(`--- Student Login Attempt: ${identifier} ---`);
+
+        // Secure bcrypt check
+        const isMatch = (student && student.password && typeof password === 'string' && typeof student.password === 'string')
+            ? await bcrypt.compare(password, student.password)
+            : false;
+
+        if (student && isMatch) {
             res.json({
                 _id: student._id,
                 fullName: student.fullName,
