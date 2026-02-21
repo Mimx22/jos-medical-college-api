@@ -29,6 +29,7 @@ const studentSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    documents: [String],
     admissionStatus: {
         type: String,
         enum: ['Pending', 'Approved', 'Rejected'],

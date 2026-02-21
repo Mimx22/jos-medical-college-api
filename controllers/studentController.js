@@ -26,13 +26,16 @@ const registerStudent = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
+        const documents = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+
         const student = await Student.create({
             fullName,
             email,
             phone,
             program,
             password: hashedPassword,
-            studentId: 'PENDING-' + Date.now().toString().slice(-6) // Temp ID
+            studentId: 'PENDING-' + Date.now().toString().slice(-6), // Temp ID
+            documents
         });
 
         if (student) {

@@ -1,4 +1,6 @@
 const Student = require('../models/Student');
+const bcrypt = require('bcryptjs');
+const sendEmail = require('../utils/sendEmail');
 
 // @desc    Get all applications
 // @route   GET /api/admin/applications
@@ -20,17 +22,44 @@ const updateApplicationStatus = async (req, res) => {
         const student = await Student.findById(req.params.id);
 
         if (student) {
+            const oldStatus = student.admissionStatus;
             student.admissionStatus = req.body.status;
 
-            if (req.body.status === 'Approved') {
+            if (req.body.status === 'Approved' && oldStatus !== 'Approved') {
                 // Generate Student ID if not already (or regenerate)
-                if (student.studentId.startsWith('PENDING')) {
+                if (!student.studentId || student.studentId.startsWith('PENDING')) {
                     const year = new Date().getFullYear();
                     const random = Math.floor(Math.random() * 900 + 100);
                     student.studentId = `JMC/${year}/${random}`;
                 }
-            } else if (req.body.status === 'Rejected') {
-                // Keep PENDING ID or clear? Keep for record.
+
+                // Generate 5-digit temporary password
+                const tempPassword = Math.floor(10000 + Math.random() * 90000).toString();
+                const salt = await bcrypt.genSalt(10);
+                student.password = await bcrypt.hash(tempPassword, salt);
+
+                // Send Email
+                const message = `
+                    <h1>Admission Approved</h1>
+                    <p>Dear ${student.fullName},</p>
+                    <p>Congratulations! Your application to Jos Medical College has been approved.</p>
+                    <p><strong>Your Login Credentials:</strong></p>
+                    <ul>
+                        <li><strong>Student ID:</strong> ${student.studentId}</li>
+                        <li><strong>Temporary Password:</strong> ${tempPassword}</li>
+                    </ul>
+                    <p>Please login at the <a href="https://medicalcareer.netlify.app/student-login.html">Student Portal</a> and change your password immediately.</p>
+                `;
+
+                try {
+                    await sendEmail({
+                        email: student.email,
+                        subject: 'Admission Approved - Jos Medical College',
+                        message
+                    });
+                } catch (emailErr) {
+                    console.error('Email failed to send:', emailErr.message);
+                }
             }
 
             const updatedStudent = await student.save();

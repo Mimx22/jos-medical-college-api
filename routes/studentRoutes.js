@@ -8,7 +8,9 @@ const {
 } = require('../controllers/studentController');
 const { protect } = require('../middleware/authMiddleware');
 
-router.post('/register', registerStudent);
+const upload = require('../middleware/uploadMiddleware');
+
+router.post('/register', upload.array('documents', 5), registerStudent);
 router.post('/login', loginUser);
 router.route('/me').get(protect, getStudentProfile);
 router.route('/profile').put(protect, updateStudentProfile);
