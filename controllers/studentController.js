@@ -20,19 +20,21 @@ const registerStudent = async (req, res) => {
     const { fullName, email, phone, program } = req.body;
 
     // Ensure password is not undefined (from FormData or otherwise)
-    // Default to 'password123' if not provided by frontend
     const password = req.body.password || 'password123';
 
     try {
         if (!email) {
+            console.error('Registration failed: Email is missing from request body');
             return res.status(400).json({ message: 'Email is required' });
         }
 
         const userExists = await Student.findOne({ email });
         if (userExists) return res.status(400).json({ message: 'User already exists' });
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        // TEMPORARY: Remove hashing to troubleshoot "illegal argument" error
+        // const salt = await bcrypt.genSalt(10);
+        // const hashedPassword = await bcrypt.hash(password, salt);
+        const hashedPassword = password;
 
         const documents = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
 
@@ -41,7 +43,7 @@ const registerStudent = async (req, res) => {
             email,
             phone,
             program,
-            password: hashedPassword,
+            password: hashedPassword, // Stored as plain text temporarily
             studentId: 'PENDING-' + Date.now().toString().slice(-6), // Temp ID
             documents
         });
