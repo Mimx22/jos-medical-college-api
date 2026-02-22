@@ -58,16 +58,32 @@ app.get('/', (req, res) => {
 // Database Connection
 const connectDB = async () => {
     try {
+        console.log('⏳ Connecting to MongoDB...');
         await mongoose.connect(process.env.MONGO_URI, {
-            serverSelectionTimeoutMS: 5000 // 5 seconds timeout
+            serverSelectionTimeoutMS: 5000, // 5 seconds timeout for selection
+            connectTimeoutMS: 10000,       // 10 seconds timeout for initial connection
         });
         console.log('🍃 MongoDB Connected Successfully');
     } catch (err) {
         console.error('❌ MongoDB Connection Error:', err.message);
+        if (err.name === 'MongooseServerSelectionError') {
+            console.error('👉 Tip: Check if your IP is whitelisted in MongoDB Atlas.');
+        }
     }
 };
 
 connectDB();
+
+// New Health Check Endpoint (Detailed)
+app.get('/api/health', (req, res) => {
+    const dbStatus = mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected';
+    res.status(200).json({
+        status: 'UP',
+        database: dbStatus,
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
 
 const PORT = process.env.PORT || 5000;
 
