@@ -8,9 +8,14 @@ const path = require('path');
 dotenv.config();
 
 // Ensure uploads directory exists
+// Ensure uploads directory exists (Graceful for Serverless)
 const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
+try {
+    if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir);
+    }
+} catch (err) {
+    console.warn('Could not create uploads directory (Serverless Read-Only):', err.message);
 }
 
 const app = express();
@@ -64,4 +69,10 @@ const connectDB = async () => {
 connectDB();
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+// Important: Do not block for Serverless (Vercel)
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+}
+
+module.exports = app;
