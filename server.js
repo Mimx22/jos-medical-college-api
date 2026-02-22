@@ -25,13 +25,14 @@ const allowedOrigins = [
     'http://localhost:5500',
     'http://127.0.0.1:5500',
     'https://medicalcareer.netlify.app',
-    'https://jos-medical-college.github.io' // Added just in case
+    'https://www.medicalcareer.netlify.app',
+    'https://jos-medical-college.github.io'
 ];
 
 app.use(cors({
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps/Postman) or allowed domains
-        if (!origin || allowedOrigins.includes(origin)) {
+        // Allow requests with no origin or allowed domains or any netlify subdomain
+        if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.netlify.app')) {
             callback(null, true);
         } else {
             console.warn(`[CORS Blocked] Origin: ${origin}`);
