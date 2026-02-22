@@ -24,6 +24,8 @@ const app = express();
 const allowedOrigins = [
     'http://localhost:5500',
     'http://127.0.0.1:5500',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
     'https://medicalcareer.netlify.app',
     'https://www.medicalcareer.netlify.app',
     'https://jos-medical-college.github.io'
@@ -80,6 +82,7 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({
         status: 'UP',
         database: dbStatus,
+        mongo_uri_present: !!process.env.MONGO_URI, // Check if the variable exists
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV || 'development'
     });
