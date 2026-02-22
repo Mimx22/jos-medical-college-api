@@ -58,6 +58,7 @@ app.get('/', (req, res) => {
 });
 
 // Database Connection
+let lastDbError = null;
 const connectDB = async () => {
     try {
         console.log('⏳ Connecting to MongoDB...');
@@ -67,6 +68,7 @@ const connectDB = async () => {
         });
         console.log('🍃 MongoDB Connected Successfully');
     } catch (err) {
+        lastDbError = err.message;
         console.error('❌ MongoDB Connection Error:', err.message);
         if (err.name === 'MongooseServerSelectionError') {
             console.error('👉 Tip: Check if your IP is whitelisted in MongoDB Atlas.');
@@ -82,7 +84,8 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({
         status: 'UP',
         database: dbStatus,
-        mongo_uri_present: !!process.env.MONGO_URI, // Check if the variable exists
+        db_error: lastDbError,
+        mongo_uri_present: !!process.env.MONGO_URI,
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV || 'development'
     });
