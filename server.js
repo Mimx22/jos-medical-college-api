@@ -7,15 +7,17 @@ const path = require('path');
 
 dotenv.config();
 
-// Ensure uploads directory exists
 // Ensure uploads directory exists (Graceful for Serverless)
-const uploadDir = path.join(__dirname, 'uploads');
-try {
-    if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir);
+// Only needed locally, Vercel uses memory storage now
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    const uploadDir = path.join(__dirname, 'uploads');
+    try {
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir);
+        }
+    } catch (err) {
+        console.warn('Could not create uploads directory:', err.message);
     }
-} catch (err) {
-    console.warn('Could not create uploads directory (Serverless Read-Only):', err.message);
 }
 
 const app = express();
@@ -44,18 +46,17 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Middleware to ensure DB is connected before handling API requests
 app.use(async (req, res, next) => {
-    // Skip health check to avoid recursion if it calls connectDB itself
+    // Skip health check to avoid recursion
     if (req.path.startsWith('/api') && req.path !== '/api/health') {
         try {
             await connectDB();
             next();
         } catch (err) {
             return res.status(503).json({
-                message: 'Database connection in progress or failed. Please refresh.',
+                message: 'Database connection failed. Please refresh.',
                 error: err.message
             });
         }

@@ -38,7 +38,11 @@ const registerStudent = async (req, res) => {
 
         const hashedPassword = password; // Using plain text
 
-        const documents = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+        // Convert memory files (Buffers) to Base64 strings for storage
+        const documents = req.files ? req.files.map(file => {
+            const base64 = file.buffer.toString('base64');
+            return `data:${file.mimetype};base64,${base64}`;
+        }) : [];
 
         const student = await Student.create({
             fullName,
