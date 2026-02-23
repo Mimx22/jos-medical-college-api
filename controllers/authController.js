@@ -150,7 +150,7 @@ const forgotPassword = async (req, res) => {
 
         // Create reset URL
         // We use window.location.origin in frontend or a fixed URL
-        const resetUrl = `${process.env.FRONTEND_URL || 'https://medicalcareer.netlify.app'}/reset-password.html?token=${resetToken}`;
+        const resetUrl = `${process.env.PORTAL_URL || process.env.FRONTEND_URL || 'https://medicalcareer.netlify.app'}/reset-password.html?token=${resetToken}`;
 
         const message = `
             <h1>Password Reset Request</h1>
