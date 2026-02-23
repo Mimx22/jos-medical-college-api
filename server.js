@@ -46,6 +46,24 @@ app.use(cors({
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Middleware to ensure DB is connected before handling API requests
+app.use(async (req, res, next) => {
+    // Skip health check to avoid recursion if it calls connectDB itself
+    if (req.path.startsWith('/api') && req.path !== '/api/health') {
+        try {
+            await connectDB();
+            next();
+        } catch (err) {
+            return res.status(503).json({
+                message: 'Database connection in progress or failed. Please refresh.',
+                error: err.message
+            });
+        }
+    } else {
+        next();
+    }
+});
+
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/students', require('./routes/studentRoutes'));
@@ -59,30 +77,52 @@ app.get('/', (req, res) => {
 
 // Database Connection
 let lastDbError = null;
+let dbPromise = null;
+
 const connectDB = async () => {
-    try {
-        console.log('⏳ Connecting to MongoDB...');
-        await mongoose.connect(process.env.MONGO_URI, {
-            serverSelectionTimeoutMS: 5000, // 5 seconds timeout for selection
-            connectTimeoutMS: 10000,       // 10 seconds timeout for initial connection
-        });
-        console.log('🍃 MongoDB Connected Successfully');
-    } catch (err) {
-        lastDbError = err.message;
-        console.error('❌ MongoDB Connection Error:', err.message);
-        if (err.name === 'MongooseServerSelectionError') {
-            console.error('👉 Tip: Check if your IP is whitelisted in MongoDB Atlas.');
+    if (mongoose.connection.readyState === 1) return mongoose.connection;
+    if (dbPromise) return dbPromise;
+
+    dbPromise = (async () => {
+        try {
+            console.log('⏳ Connecting to MongoDB...');
+            const conn = await mongoose.connect(process.env.MONGO_URI, {
+                serverSelectionTimeoutMS: 5000,
+                connectTimeoutMS: 10000,
+            });
+            console.log('🍃 MongoDB Connected Successfully');
+            lastDbError = null;
+            return conn;
+        } catch (err) {
+            lastDbError = err.message;
+            dbPromise = null; // Reset promise so we can retry
+            console.error('❌ MongoDB Connection Error:', err.message);
+            if (err.name === 'MongooseServerSelectionError') {
+                console.error('👉 Tip: Check if your IP is whitelisted in MongoDB Atlas.');
+            }
+            throw err;
         }
-    }
+    })();
+
+    return dbPromise;
 };
 
-connectDB();
+// Initial connection attempt (background)
+connectDB().catch(() => { });
 
 // New Health Check Endpoint (Detailed)
-app.get('/api/health', (req, res) => {
-    const dbStatus = mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected';
+app.get('/api/health', async (req, res) => {
+    try {
+        await connectDB();
+    } catch (err) {
+        // Error already captured in lastDbError
+    }
 
-    // Mask the URI for safe verification (e.g., mongodb+srv://user:****@host)
+    const stateMap = { 0: 'Disconnected', 1: 'Connected', 2: 'Connecting', 3: 'Disconnecting' };
+    const readyState = mongoose.connection.readyState;
+    const dbStatus = stateMap[readyState] || 'Unknown';
+
+    // Mask the URI for safe verification
     let maskedUri = 'Not Present';
     if (process.env.MONGO_URI) {
         maskedUri = process.env.MONGO_URI.replace(/:([^@\s]+)@/, ':****@');
@@ -91,11 +131,12 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({
         status: 'UP',
         database: dbStatus,
+        readyState: readyState,
         db_error: lastDbError,
         mongo_uri_present: !!process.env.MONGO_URI,
-        uri_preview: maskedUri, // Show masked version
+        uri_preview: maskedUri,
         timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'production'
     });
 });
 
