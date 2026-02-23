@@ -81,11 +81,19 @@ connectDB();
 // New Health Check Endpoint (Detailed)
 app.get('/api/health', (req, res) => {
     const dbStatus = mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected';
+
+    // Mask the URI for safe verification (e.g., mongodb+srv://user:****@host)
+    let maskedUri = 'Not Present';
+    if (process.env.MONGO_URI) {
+        maskedUri = process.env.MONGO_URI.replace(/:([^@\s]+)@/, ':****@');
+    }
+
     res.status(200).json({
         status: 'UP',
         database: dbStatus,
         db_error: lastDbError,
         mongo_uri_present: !!process.env.MONGO_URI,
+        uri_preview: maskedUri, // Show masked version
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV || 'development'
     });
